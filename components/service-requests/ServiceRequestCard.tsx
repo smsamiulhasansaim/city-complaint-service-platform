@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { CreditCard, FileText } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ServiceRequestStatusBadge } from "@/components/ui/StatusBadge";
@@ -7,10 +8,6 @@ import { formatCurrency, formatRelative } from "@/lib/utils/format";
 
 export interface ServiceRequestCardProps {
   request: ServiceRequest;
-  /**
-   * Base path for the detail route. Defaults to the citizen dashboard.
-   * Agents should pass "/provider/service-requests".
-   */
   basePath?: string;
 }
 
@@ -21,7 +18,7 @@ export function ServiceRequestCard({
   const isPaid = request.status !== "PENDING_PAYMENT";
 
   return (
-    <Link href={`${basePath}/${request.id}`} className="block">
+    <Link href={`${basePath}/${request.id}` as Route} className="block">
       <Card className="transition-all hover:border-ink hover:shadow-[4px_4px_0_0_var(--color-ink)]">
         <CardContent>
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -50,7 +47,9 @@ export function ServiceRequestCard({
                 Payment pending
               </span>
             )}
-            <span className="ml-auto">{formatRelative(request.createdAt)}</span>
+            <span className="ml-auto">
+              {formatRelative(request.createdAt)}
+            </span>
           </div>
         </CardContent>
       </Card>

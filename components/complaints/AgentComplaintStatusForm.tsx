@@ -15,15 +15,35 @@ import { useChangeComplaintStatus } from "@/hooks/useComplaints";
 import { humanizeEnum } from "@/lib/utils/format";
 import type { Complaint, ComplaintStatus } from "@/lib/api/types";
 
-/** Agent allowed statuses (mirrors backend). */
-const AGENT_ALLOWED = [
+/**
+ * Mirrors the backend's STATUS_TRANSITIONS and AGENT_ALLOWED_STATUSES so the
+ * UI only offers transitions the API will accept.
+ *
+ * Source of truth: backend `complaint.service.ts`.
+ */
+const STATUS_TRANSITIONS: Record<ComplaintStatus, ComplaintStatus[]> = {
+  PENDING: ["ASSIGNED", "REJECTED", "CLOSED"],
+  ASSIGNED: ["IN_PROGRESS", "REJECTED", "CLOSED"],
+  IN_PROGRESS: ["RESOLVED", "REJECTED", "CLOSED"],
+  RESOLVED: ["CLOSED", "IN_PROGRESS"],
+  REJECTED: ["CLOSED"],
+  CLOSED: [],
+};
+
+const AGENT_ALLOWED_STATUSES: ComplaintStatus[] = [
   "IN_PROGRESS",
   "RESOLVED",
   "REJECTED",
-] as const satisfies readonly ComplaintStatus[];
+];
 
 const statusSchema = z.object({
-  status: z.enum(["IN_PROGRESS", "RESOLVED", "REJECTED"]),
+  status: z.enum([
+    "IN_PROGRESS",
+    "RESOLVED",
+    "REJECTED",
+    "ASSIGNED",
+    "CLOSED",
+  ]),
   note: z.string().max(1000, "Note is too long").optional().or(z.literal("")),
 });
 
@@ -39,8 +59,10 @@ export function AgentComplaintStatusForm({
   const [open, setOpen] = useState(false);
   const mutation = useChangeComplaintStatus();
 
-  // Compute which of the allowed statuses are actually legal from current state.
-  const allowed = AGENT_ALLOWED.filter((s) => s !== complaint.status);
+  // The exact set the backend will accept for this complaint right now.
+  const allowed = STATUS_TRANSITIONS[complaint.status].filter((s) =>
+    AGENT_ALLOWED_STATUSES.includes(s),
+  );
 
   const options: SelectOption[] = allowed.map((s) => ({
     value: s,
@@ -54,7 +76,10 @@ export function AgentComplaintStatusForm({
     formState: { errors },
   } = useForm<StatusFormValues>({
     resolver: zodResolver(statusSchema),
-    defaultValues: { status: allowed[0] ?? "IN_PROGRESS", note: "" },
+    defaultValues: {
+      status: (allowed[0] ?? "IN_PROGRESS") as StatusFormValues["status"],
+      note: "",
+    },
   });
 
   if (allowed.length === 0) {
@@ -114,7 +139,12 @@ export function AgentComplaintStatusForm({
           </>
         }
       >
-        <form id="agent-status-form" onSubmit={onSubmit} className="space-y-4" noValidate>
+        <form
+          id="agent-status-form"
+          onSubmit={onSubmit}
+          className="space-y-4"
+          noValidate
+        >
           <Select
             label="New status"
             required

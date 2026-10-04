@@ -152,7 +152,11 @@ export default function AgentComplaintsPage() {
         <>
           <div className="space-y-3">
             {data?.items.map((c) => (
-              <ComplaintCard key={c.id} complaint={c} />
+              <ComplaintCard
+                key={c.id}
+                complaint={c}
+                basePath="/provider/complaints"
+              />
             ))}
           </div>
           <Pagination

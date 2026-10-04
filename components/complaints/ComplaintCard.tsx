@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Route } from "next";
 import { MapPin, MessageSquare, Zap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ComplaintStatusBadge } from "@/components/ui/StatusBadge";
@@ -11,6 +12,7 @@ export interface ComplaintCardProps {
   /**
    * Base path for the detail route. Defaults to the citizen dashboard.
    * Agents should pass "/provider/complaints".
+   * Admins should pass "/admin/complaints".
    */
   basePath?: string;
 }
@@ -20,7 +22,7 @@ export function ComplaintCard({
   basePath = "/dashboard/complaints",
 }: ComplaintCardProps) {
   return (
-    <Link href={`${basePath}/${complaint.id}`} className="block">
+    <Link href={`${basePath}/${complaint.id}` as Route} className="block">
       <Card className="transition-all hover:border-ink hover:shadow-[4px_4px_0_0_var(--color-ink)]">
         <CardContent>
           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -62,7 +64,9 @@ export function ComplaintCard({
                   {complaint._count.updates}
                 </span>
               )}
-            <span className="ml-auto">{formatRelative(complaint.createdAt)}</span>
+            <span className="ml-auto">
+              {formatRelative(complaint.createdAt)}
+            </span>
           </div>
         </CardContent>
       </Card>

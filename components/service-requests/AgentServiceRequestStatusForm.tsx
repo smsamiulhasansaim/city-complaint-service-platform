@@ -18,8 +18,20 @@ import type {
   ServiceRequestStatus,
 } from "@/lib/api/types";
 
-/** Agent allowed statuses (mirrors backend). */
-const AGENT_ALLOWED: ServiceRequestStatus[] = [
+/**
+ * Mirrors the backend's STATUS_TRANSITIONS and AGENT_ALLOWED_STATUSES.
+ * Source of truth: backend `serviceRequest.service.ts`.
+ */
+const STATUS_TRANSITIONS: Record<ServiceRequestStatus, ServiceRequestStatus[]> = {
+  PENDING_PAYMENT: [],
+  PAID: ["IN_REVIEW", "REJECTED"],
+  IN_REVIEW: ["APPROVED", "REJECTED"],
+  APPROVED: ["COMPLETED"],
+  REJECTED: [],
+  COMPLETED: [],
+};
+
+const AGENT_ALLOWED_STATUSES: ServiceRequestStatus[] = [
   "IN_REVIEW",
   "APPROVED",
   "REJECTED",
@@ -27,7 +39,12 @@ const AGENT_ALLOWED: ServiceRequestStatus[] = [
 ];
 
 const statusSchema = z.object({
-  status: z.enum(["IN_REVIEW", "APPROVED", "REJECTED", "COMPLETED"]),
+  status: z.enum([
+    "IN_REVIEW",
+    "APPROVED",
+    "REJECTED",
+    "COMPLETED",
+  ]),
   note: z.string().max(1000, "Note is too long").optional().or(z.literal("")),
 });
 
@@ -43,7 +60,9 @@ export function AgentServiceRequestStatusForm({
   const [open, setOpen] = useState(false);
   const mutation = useChangeServiceRequestStatus();
 
-  const allowed = AGENT_ALLOWED.filter((s) => s !== request.status);
+  const allowed = STATUS_TRANSITIONS[request.status].filter((s) =>
+    AGENT_ALLOWED_STATUSES.includes(s),
+  );
 
   const options: SelectOption[] = allowed.map((s) => ({
     value: s,
@@ -58,7 +77,7 @@ export function AgentServiceRequestStatusForm({
   } = useForm<StatusFormValues>({
     resolver: zodResolver(statusSchema),
     defaultValues: {
-      status: (allowed[0] as StatusFormValues["status"] | undefined) ?? "IN_REVIEW",
+      status: (allowed[0] ?? "IN_REVIEW") as StatusFormValues["status"],
       note: "",
     },
   });
