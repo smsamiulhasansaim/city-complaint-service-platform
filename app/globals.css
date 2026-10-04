@@ -1,2 +1,210 @@
 @import "tailwindcss";
 
+@theme {
+  /* ============================================================
+   * Surfaces & Ink
+   * ============================================================ */
+  --color-cream: #faf4e4;
+  --color-surface: #fffbf0;
+  --color-surface-2: #f7eedb;
+  --color-ink: #4b1d22;
+  --color-ink-muted: #6b5a52;
+
+  /* ============================================================
+   * Brand & Accents
+   * ============================================================ */
+  --color-brand: #4b1d22;
+  --color-brand-hover: #63272e;
+  --color-accent: #8a9e7b;
+  --color-accent-hover: #768a68;
+  --color-gold: #e9b86b;
+  --color-coral: #f4a58a;
+
+  /* ============================================================
+   * Semantic — Status (Complaint / ServiceRequest / Payment)
+   * ============================================================ */
+  --color-status-pending: #e9b86b;
+  --color-status-pending-bg: #fdf3e0;
+
+  --color-status-assigned: #8a9e7b;
+  --color-status-assigned-bg: #eef3e9;
+
+  --color-status-progress: #d98e4a;
+  --color-status-progress-bg: #fbebd9;
+
+  --color-status-resolved: #4f8a5b;
+  --color-status-resolved-bg: #e4efe6;
+
+  --color-status-rejected: #c0553a;
+  --color-status-rejected-bg: #f7e0d9;
+
+  --color-status-closed: #6b5a52;
+  --color-status-closed-bg: #ece7e2;
+
+  /* ============================================================
+   * Semantic — Priority
+   * ============================================================ */
+  --color-priority-low: #6b5a52;
+  --color-priority-low-bg: #ece7e2;
+  --color-priority-medium: #8a9e7b;
+  --color-priority-medium-bg: #eef3e9;
+  --color-priority-high: #e9b86b;
+  --color-priority-high-bg: #fdf3e0;
+  --color-priority-urgent: #c0553a;
+  --color-priority-urgent-bg: #f7e0d9;
+
+  /* ============================================================
+   * Semantic — Feedback
+   * ============================================================ */
+  --color-info: #4a7fa5;
+  --color-info-bg: #e2eef6;
+  --color-success: #4f8a5b;
+  --color-success-bg: #e4efe6;
+  --color-warning: #d98e4a;
+  --color-warning-bg: #fbebd9;
+  --color-danger: #c0553a;
+  --color-danger-bg: #f7e0d9;
+
+  /* ============================================================
+   * Border & Divider
+   * ============================================================ */
+  --color-border: #e2d8c2;
+  --color-border-strong: #c9bc9e;
+
+  /* ============================================================
+   * Radius
+   * ============================================================ */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* ============================================================
+   * Shadow — pixel offset style matching the 404 page
+   * ============================================================ */
+  --shadow-pixel-sm: 2px 2px 0 0 var(--color-accent);
+  --shadow-pixel-md: 4px 4px 0 0 var(--color-accent);
+  --shadow-pixel-lg: 6px 6px 0 0 var(--color-accent);
+  --shadow-pixel-ink: 4px 4px 0 0 var(--color-ink);
+
+  /* ============================================================
+   * Typography
+   * ============================================================ */
+  --font-sans: var(--font-geist-sans, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif);
+  --font-pixel: var(--font-pixelify, "Courier New", monospace);
+
+  /* ============================================================
+   * Motion
+   * ============================================================ */
+  --ease-out-quart: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================
+ * Base
+ * ============================================================ */
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus ring — accessible and consistent across the app */
+  :focus-visible {
+    outline: 2px solid var(--color-ink);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Disable focus ring on mouse-only clicks */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* Respect reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ============================================================
+ * Utilities
+ * ============================================================ */
+@layer utilities {
+  /* Hide scrollbar but keep scroll functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Line clamp helpers (in case Tailwind's plugin is not enabled) */
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Skeleton pulse — respects reduced motion */
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+  .animate-skeleton {
+    animation: skeleton-pulse 2s var(--ease-out-quart) infinite;
+  }
+
+  /* Fade-in — used for page/content enter animations */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .animate-fade-in {
+    animation: fade-in 0.4s var(--ease-out-quart) both;
+  }
+}
