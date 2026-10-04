@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
+  Bell,
   Building2,
   LayoutDashboard,
   LogOut,
@@ -13,11 +14,13 @@ import {
   User as UserIcon,
   X,
 } from "lucide-react";
+
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
 import { initials } from "@/lib/utils/format";
 import { ROLE_HOME } from "@/lib/utils/constants";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnreadCount } from "@/hooks/useNotifications";
 
 const PUBLIC_LINKS = [
   { href: "/", label: "Home" },
@@ -31,6 +34,8 @@ export default function Navbar() {
   const pathname = usePathname();
   const { user, initialized, logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const unread = useUnreadCount();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -47,6 +52,7 @@ export default function Navbar() {
           <span className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-ink bg-surface shadow-[3px_3px_0_0_var(--color-ink)]">
             <Building2 className="h-4.5 w-4.5" aria-hidden="true" />
           </span>
+
           <span className="hidden text-sm font-semibold tracking-tight text-ink sm:inline">
             City Complaint
           </span>
@@ -78,13 +84,32 @@ export default function Navbar() {
           {!initialized ? (
             <div className="h-9 w-24 animate-skeleton rounded-md bg-surface-2" />
           ) : user ? (
-            <UserMenu
-              name={user.name}
-              email={user.email}
-              role={user.role}
-              avatar={user.avatar}
-              onLogout={() => void logout()}
-            />
+            <>
+              {/* Notifications */}
+              <Link
+                href="/dashboard/notifications"
+                className="relative rounded-md border-2 border-border-strong bg-surface p-2 transition-colors hover:bg-surface-2"
+                aria-label={`Notifications${
+                  unread.data ? `, ${unread.data} unread` : ""
+                }`}
+              >
+                <Bell className="h-4 w-4" aria-hidden="true" />
+
+                {Boolean(unread.data) && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-surface bg-danger px-1 text-[9px] font-bold text-surface">
+                    {unread.data! > 9 ? "9+" : unread.data}
+                  </span>
+                )}
+              </Link>
+
+              <UserMenu
+                name={user.name}
+                email={user.email}
+                role={user.role}
+                avatar={user.avatar}
+                onLogout={() => void logout()}
+              />
+            </>
           ) : (
             <>
               <Link href="/login">
@@ -92,6 +117,7 @@ export default function Navbar() {
                   Login
                 </Button>
               </Link>
+
               <Link href="/register">
                 <Button size="sm">Register</Button>
               </Link>
@@ -148,14 +174,41 @@ export default function Navbar() {
               ) : user ? (
                 <>
                   <Link
+                    href="/dashboard/notifications"
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      size="sm"
+                      leftIcon={<Bell className="h-4 w-4" />}
+                    >
+                      Notifications
+                      {Boolean(unread.data) && (
+                        <span className="ml-1 rounded-full bg-danger px-1.5 py-0.5 text-[9px] font-bold text-surface">
+                          {unread.data! > 9 ? "9+" : unread.data}
+                        </span>
+                      )}
+                    </Button>
+                  </Link>
+
+                  <Link
                     href={ROLE_HOME[user.role]}
                     onClick={() => setMobileOpen(false)}
                   >
-                    <Button variant="outline" fullWidth size="sm">
-                      <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      size="sm"
+                    >
+                      <LayoutDashboard
+                        className="h-4 w-4"
+                        aria-hidden="true"
+                      />
                       Go to dashboard
                     </Button>
                   </Link>
+
                   <Button
                     variant="ghost"
                     size="sm"
@@ -171,12 +224,19 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     <Button variant="outline" fullWidth size="sm">
                       Login
                     </Button>
                   </Link>
-                  <Link href="/register" onClick={() => setMobileOpen(false)}>
+
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileOpen(false)}
+                  >
                     <Button fullWidth size="sm">
                       Register
                     </Button>
@@ -199,7 +259,13 @@ interface UserMenuProps {
   onLogout: () => void;
 }
 
-function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
+function UserMenu({
+  name,
+  email,
+  role,
+  avatar,
+  onLogout,
+}: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const home = ROLE_HOME[role];
 
@@ -226,7 +292,10 @@ function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
             {initials(name)}
           </span>
         )}
-        <span className="max-w-24 truncate font-medium text-ink">{name}</span>
+
+        <span className="max-w-24 truncate font-medium text-ink">
+          {name}
+        </span>
       </button>
 
       {open && (
@@ -237,13 +306,20 @@ function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
+
           <div
             role="menu"
             className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-lg border-2 border-ink bg-surface shadow-[4px_4px_0_0_var(--color-ink)]"
           >
             <div className="border-b border-border px-4 py-3">
-              <p className="truncate text-sm font-semibold text-ink">{name}</p>
-              <p className="truncate text-xs text-ink-muted">{email}</p>
+              <p className="truncate text-sm font-semibold text-ink">
+                {name}
+              </p>
+
+              <p className="truncate text-xs text-ink-muted">
+                {email}
+              </p>
+
               <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-border-strong px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
                 {role === "ADMIN" ? (
                   <Shield className="h-3 w-3" aria-hidden="true" />
@@ -260,7 +336,10 @@ function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink hover:bg-surface-2"
             >
-              <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+              <LayoutDashboard
+                className="h-4 w-4"
+                aria-hidden="true"
+              />
               My dashboard
             </Link>
 
@@ -282,3 +361,4 @@ function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
     </div>
   );
 }
+

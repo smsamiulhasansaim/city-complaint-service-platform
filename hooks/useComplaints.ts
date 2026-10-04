@@ -19,6 +19,7 @@ interface ComplaintsListResponse {
   // The proxy returns `data` as an array; meta separately.
   // We call the proxy with the raw list endpoint.
   items: Complaint[];
+  total: number;
 }
 
 export function useComplaints(query: ListComplaintsQuery) {
