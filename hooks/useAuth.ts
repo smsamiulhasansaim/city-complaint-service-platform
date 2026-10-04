@@ -111,6 +111,7 @@ export function useAuth() {
     clear();
     queryClient.clear();
     router.replace("/login");
+    router.refresh();
   }, [clear, queryClient, router]);
 
   return {
@@ -124,7 +125,7 @@ export function useAuth() {
   };
 }
 
-function getRoleHome(user: User): string {
+function getRoleHome(user: User): "/admin" | "/provider" | "/dashboard" {
   switch (user.role) {
     case "ADMIN":
       return "/admin";
