@@ -14,7 +14,6 @@ import {
   User as UserIcon,
   X,
 } from "lucide-react";
-
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils/cn";
 import { initials } from "@/lib/utils/format";
@@ -33,32 +32,34 @@ const PUBLIC_LINKS = [
 export default function Navbar() {
   const pathname = usePathname();
   const { user, initialized, logout } = useAuth();
-  const [mobileOpen, setMobileOpen] = useState(false);
-
   const unread = useUnreadCount();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
+  const notificationsHref = user
+    ? user.role === "CITIZEN"
+      ? "/dashboard/notifications"
+      : ROLE_HOME[user.role]
+    : "/login";
+
   return (
     <header className="sticky top-0 z-40 border-b-2 border-border bg-cream/95 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center gap-3 px-4 sm:px-6">
-        {/* Brand */}
         <Link
           href="/"
           className="flex shrink-0 items-center gap-2"
           aria-label="City Complaint Service Platform — home"
         >
           <span className="flex h-9 w-9 items-center justify-center rounded-md border-2 border-ink bg-surface shadow-[3px_3px_0_0_var(--color-ink)]">
-            <Building2 className="h-4.5 w-4.5" aria-hidden="true" />
+            <Building2 className="h-4 w-4" aria-hidden="true" />
           </span>
-
           <span className="hidden text-sm font-semibold tracking-tight text-ink sm:inline">
             City Complaint
           </span>
         </Link>
 
-        {/* Desktop nav */}
         <nav
           className="ml-4 hidden flex-1 items-center gap-1 lg:flex"
           aria-label="Primary"
@@ -79,29 +80,29 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* Desktop actions */}
         <div className="ml-auto hidden items-center gap-2 lg:flex">
           {!initialized ? (
             <div className="h-9 w-24 animate-skeleton rounded-md bg-surface-2" />
           ) : user ? (
             <>
-              {/* Notifications */}
-              <Link
-                href="/dashboard/notifications"
-                className="relative rounded-md border-2 border-border-strong bg-surface p-2 transition-colors hover:bg-surface-2"
-                aria-label={`Notifications${
-                  unread.data ? `, ${unread.data} unread` : ""
-                }`}
-              >
-                <Bell className="h-4 w-4" aria-hidden="true" />
-
-                {Boolean(unread.data) && (
-                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-surface bg-danger px-1 text-[9px] font-bold text-surface">
-                    {unread.data! > 9 ? "9+" : unread.data}
-                  </span>
-                )}
-              </Link>
-
+              {user.role === "CITIZEN" && (
+                <Link
+                  href={notificationsHref}
+                  className="relative rounded-md border-2 border-border-strong bg-surface p-2 transition-colors hover:bg-surface-2"
+                  aria-label={
+                    unread.data
+                      ? `Notifications, ${unread.data} unread`
+                      : "Notifications"
+                  }
+                >
+                  <Bell className="h-4 w-4" aria-hidden="true" />
+                  {Boolean(unread.data) && (
+                    <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 border-surface bg-danger px-1 text-[9px] font-bold text-surface">
+                      {unread.data! > 9 ? "9+" : unread.data}
+                    </span>
+                  )}
+                </Link>
+              )}
               <UserMenu
                 name={user.name}
                 email={user.email}
@@ -117,7 +118,6 @@ export default function Navbar() {
                   Login
                 </Button>
               </Link>
-
               <Link href="/register">
                 <Button size="sm">Register</Button>
               </Link>
@@ -125,7 +125,6 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile menu toggle */}
         <button
           type="button"
           className="ml-auto rounded-md border-2 border-border-strong bg-surface p-2 lg:hidden"
@@ -142,7 +141,6 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div
           id="mobile-menu"
@@ -174,41 +172,30 @@ export default function Navbar() {
               ) : user ? (
                 <>
                   <Link
-                    href="/dashboard/notifications"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    <Button
-                      variant="outline"
-                      fullWidth
-                      size="sm"
-                      leftIcon={<Bell className="h-4 w-4" />}
-                    >
-                      Notifications
-                      {Boolean(unread.data) && (
-                        <span className="ml-1 rounded-full bg-danger px-1.5 py-0.5 text-[9px] font-bold text-surface">
-                          {unread.data! > 9 ? "9+" : unread.data}
-                        </span>
-                      )}
-                    </Button>
-                  </Link>
-
-                  <Link
                     href={ROLE_HOME[user.role]}
                     onClick={() => setMobileOpen(false)}
                   >
-                    <Button
-                      variant="outline"
-                      fullWidth
-                      size="sm"
-                    >
-                      <LayoutDashboard
-                        className="h-4 w-4"
-                        aria-hidden="true"
-                      />
+                    <Button variant="outline" fullWidth size="sm">
+                      <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
                       Go to dashboard
                     </Button>
                   </Link>
-
+                  {user.role === "CITIZEN" && (
+                    <Link
+                      href={notificationsHref}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      <Button variant="ghost" fullWidth size="sm">
+                        <Bell className="h-4 w-4" aria-hidden="true" />
+                        Notifications
+                        {Boolean(unread.data) && (
+                          <span className="ml-1 rounded-full bg-danger px-1.5 text-[10px] font-bold text-surface">
+                            {unread.data! > 9 ? "9+" : unread.data}
+                          </span>
+                        )}
+                      </Button>
+                    </Link>
+                  )}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -224,19 +211,12 @@ export default function Navbar() {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileOpen(false)}
-                  >
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
                     <Button variant="outline" fullWidth size="sm">
                       Login
                     </Button>
                   </Link>
-
-                  <Link
-                    href="/register"
-                    onClick={() => setMobileOpen(false)}
-                  >
+                  <Link href="/register" onClick={() => setMobileOpen(false)}>
                     <Button fullWidth size="sm">
                       Register
                     </Button>
@@ -259,13 +239,7 @@ interface UserMenuProps {
   onLogout: () => void;
 }
 
-function UserMenu({
-  name,
-  email,
-  role,
-  avatar,
-  onLogout,
-}: UserMenuProps) {
+function UserMenu({ name, email, role, avatar, onLogout }: UserMenuProps) {
   const [open, setOpen] = useState(false);
   const home = ROLE_HOME[role];
 
@@ -292,10 +266,7 @@ function UserMenu({
             {initials(name)}
           </span>
         )}
-
-        <span className="max-w-24 truncate font-medium text-ink">
-          {name}
-        </span>
+        <span className="max-w-24 truncate font-medium text-ink">{name}</span>
       </button>
 
       {open && (
@@ -306,20 +277,13 @@ function UserMenu({
             className="fixed inset-0 z-40 cursor-default"
             onClick={() => setOpen(false)}
           />
-
           <div
             role="menu"
             className="absolute right-0 z-50 mt-2 w-60 overflow-hidden rounded-lg border-2 border-ink bg-surface shadow-[4px_4px_0_0_var(--color-ink)]"
           >
             <div className="border-b border-border px-4 py-3">
-              <p className="truncate text-sm font-semibold text-ink">
-                {name}
-              </p>
-
-              <p className="truncate text-xs text-ink-muted">
-                {email}
-              </p>
-
+              <p className="truncate text-sm font-semibold text-ink">{name}</p>
+              <p className="truncate text-xs text-ink-muted">{email}</p>
               <p className="mt-1 inline-flex items-center gap-1 rounded-full border border-border-strong px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-muted">
                 {role === "ADMIN" ? (
                   <Shield className="h-3 w-3" aria-hidden="true" />
@@ -336,10 +300,7 @@ function UserMenu({
               onClick={() => setOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-ink hover:bg-surface-2"
             >
-              <LayoutDashboard
-                className="h-4 w-4"
-                aria-hidden="true"
-              />
+              <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
               My dashboard
             </Link>
 
@@ -361,4 +322,3 @@ function UserMenu({
     </div>
   );
 }
-

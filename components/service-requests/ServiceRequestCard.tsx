@@ -7,16 +7,21 @@ import { formatCurrency, formatRelative } from "@/lib/utils/format";
 
 export interface ServiceRequestCardProps {
   request: ServiceRequest;
+  /**
+   * Base path for the detail route. Defaults to the citizen dashboard.
+   * Agents should pass "/provider/service-requests".
+   */
+  basePath?: string;
 }
 
-export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
+export function ServiceRequestCard({
+  request,
+  basePath = "/dashboard/service-requests",
+}: ServiceRequestCardProps) {
   const isPaid = request.status !== "PENDING_PAYMENT";
 
   return (
-    <Link
-      href={`/dashboard/service-requests/${request.id}`}
-      className="block"
-    >
+    <Link href={`${basePath}/${request.id}`} className="block">
       <Card className="transition-all hover:border-ink hover:shadow-[4px_4px_0_0_var(--color-ink)]">
         <CardContent>
           <div className="flex flex-wrap items-start justify-between gap-2">

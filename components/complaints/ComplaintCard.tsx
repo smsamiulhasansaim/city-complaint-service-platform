@@ -8,11 +8,19 @@ import { formatRelative, truncate } from "@/lib/utils/format";
 
 export interface ComplaintCardProps {
   complaint: Complaint;
+  /**
+   * Base path for the detail route. Defaults to the citizen dashboard.
+   * Agents should pass "/provider/complaints".
+   */
+  basePath?: string;
 }
 
-export function ComplaintCard({ complaint }: ComplaintCardProps) {
+export function ComplaintCard({
+  complaint,
+  basePath = "/dashboard/complaints",
+}: ComplaintCardProps) {
   return (
-    <Link href={`/dashboard/complaints/${complaint.id}`} className="block">
+    <Link href={`${basePath}/${complaint.id}`} className="block">
       <Card className="transition-all hover:border-ink hover:shadow-[4px_4px_0_0_var(--color-ink)]">
         <CardContent>
           <div className="flex flex-wrap items-start justify-between gap-2">
