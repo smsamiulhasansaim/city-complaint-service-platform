@@ -61,6 +61,7 @@ export function ComplaintWizard() {
   const { data: categories } = useCategories();
   const createComplaint = useCreateComplaint();
   const [step, setStep] = useState(1);
+  const [isSubmittingManually, setIsSubmittingManually] = useState(false);
 
   const categoryOptions: SelectOption[] = useMemo(
     () =>
@@ -103,7 +104,12 @@ export function ComplaintWizard() {
 
   const goBack = () => setStep((s) => Math.max(s - 1, 1));
 
-  const onSubmit = handleSubmit(async (data) => {
+  /**
+   * Only invoked from the explicit "File complaint" button click handler.
+   * The form element has no onSubmit handler; submitting is always manual.
+   */
+  const submitComplaint = handleSubmit(async (data) => {
+    setIsSubmittingManually(true);
     try {
       const complaint = await createComplaint.mutateAsync({
         categoryId: data.categoryId,
@@ -112,7 +118,8 @@ export function ComplaintWizard() {
         priority: data.priority,
         ward: data.ward || undefined,
         address: data.address || undefined,
-        images: data.images && data.images.length > 0 ? data.images : undefined,
+        images:
+          data.images && data.images.length > 0 ? data.images : undefined,
       });
       toast.success("Complaint filed successfully");
       router.replace(`/dashboard/complaints/${complaint.id}`);
@@ -120,10 +127,13 @@ export function ComplaintWizard() {
       const message =
         err instanceof Error ? err.message : "Could not file complaint";
       toast.error(message);
+      setIsSubmittingManually(false);
     }
   });
 
   const selectedCategory = categories?.find((c) => c.id === values.categoryId);
+
+  const isBusy = createComplaint.isPending || isSubmitting || isSubmittingManually;
 
   return (
     <div className="space-y-6">
@@ -173,7 +183,12 @@ export function ComplaintWizard() {
         })}
       </ol>
 
-      <form onSubmit={onSubmit} noValidate>
+      {/*
+        The form intentionally has NO onSubmit handler. Implicit submission
+        via Enter key or autofill is blocked. Submission only happens when
+        the user clicks the "File complaint" button.
+      */}
+      <form onSubmit={(e) => e.preventDefault()} noValidate>
         <Card>
           <CardContent className="space-y-5 pt-5">
             <header>
@@ -287,7 +302,7 @@ export function ComplaintWizard() {
                 type="button"
                 variant="ghost"
                 onClick={goBack}
-                disabled={step === 1 || createComplaint.isPending || isSubmitting}
+                disabled={step === 1 || isBusy}
                 leftIcon={<ArrowLeft className="h-4 w-4" />}
               >
                 Back
@@ -303,8 +318,9 @@ export function ComplaintWizard() {
                 </Button>
               ) : (
                 <Button
-                  type="submit"
-                  isLoading={createComplaint.isPending || isSubmitting}
+                  type="button"
+                  onClick={() => void submitComplaint()}
+                  isLoading={isBusy}
                   leftIcon={<Plus className="h-4 w-4" />}
                 >
                   File complaint
