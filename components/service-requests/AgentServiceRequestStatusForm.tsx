@@ -39,12 +39,7 @@ const AGENT_ALLOWED_STATUSES: ServiceRequestStatus[] = [
 ];
 
 const statusSchema = z.object({
-  status: z.enum([
-    "IN_REVIEW",
-    "APPROVED",
-    "REJECTED",
-    "COMPLETED",
-  ]),
+  status: z.enum(["IN_REVIEW", "APPROVED", "REJECTED", "COMPLETED"]),
   note: z.string().max(1000, "Note is too long").optional().or(z.literal("")),
 });
 

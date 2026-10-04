@@ -4,13 +4,14 @@ import { writeSessionToken } from "@/lib/auth/session";
 import type { ApiErrorBody, ApiSuccess, AuthResponse } from "@/lib/api/types";
 
 interface GooglePayload {
-  idToken: string;
+  code: string;
+  redirectUri?: string;
 }
 
 function isGooglePayload(value: unknown): value is GooglePayload {
   if (!value || typeof value !== "object") return false;
   const v = value as Record<string, unknown>;
-  return typeof v.idToken === "string" && v.idToken.length > 10;
+  return typeof v.code === "string" && v.code.length > 10;
 }
 
 export async function POST(request: NextRequest) {
