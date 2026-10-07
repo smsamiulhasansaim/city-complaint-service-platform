@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+
 import { Button } from "@/components/ui/Button";
 import { useAuthStore } from "@/stores/auth.store";
 import type { User } from "@/lib/api/types";
@@ -14,31 +15,54 @@ const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 interface GoogleEnvelope {
   success: boolean;
   message: string;
-  data: { user: User };
+  data: {
+    user: User;
+    token?: string;
+  };
 }
 
 function GoogleLoginButtonInner() {
   const router = useRouter();
   const setUser = useAuthStore((s) => s.setUser);
+
   const [isStarting, setIsStarting] = useState(false);
 
-  const exchangeIdToken = useMutation({
-    mutationFn: async (idToken: string): Promise<User> => {
+  const exchangeCode = useMutation({
+    mutationFn: async ({
+      code,
+      redirectUri,
+    }: {
+      code: string;
+      redirectUri: string;
+    }): Promise<User> => {
       const res = await fetch("/api/auth/google", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({
+          code,
+          redirectUri,
+        }),
       });
-      const body = (await res.json().catch(() => null)) as GoogleEnvelope | null;
+
+      const body = (await res.json().catch(() => null)) as
+        | GoogleEnvelope
+        | null;
+
       if (!res.ok || !body?.success) {
         throw new Error(body?.message ?? "Google login failed");
       }
+
       return body.data.user;
     },
+
     onSuccess: (user) => {
       setUser(user);
+
       toast.success("Welcome back!");
+
       router.replace(
         user.role === "ADMIN"
           ? "/admin"
@@ -47,23 +71,33 @@ function GoogleLoginButtonInner() {
             : "/dashboard",
       );
     },
+
     onError: (error: Error) => {
       toast.error(error.message);
+      setIsStarting(false);
     },
   });
 
   const googleLogin = useGoogleLogin({
-    flow: "implicit",
+    flow: "auth-code",
+
     scope: "openid email profile",
-    onSuccess: (tokenResponse) => {
-      const idToken = (tokenResponse as { id_token?: string }).id_token;
-      if (!idToken) {
-        toast.error("Google did not return an ID token.");
+
+    ux_mode: "popup",
+
+    onSuccess: (codeResponse) => {
+      if (!codeResponse.code) {
+        toast.error("Google did not return an authorization code.");
         setIsStarting(false);
         return;
       }
-      exchangeIdToken.mutate(idToken);
+
+      exchangeCode.mutate({
+        code: codeResponse.code,
+        redirectUri: "postmessage",
+      });
     },
+
     onError: () => {
       toast.error("Google sign-in was cancelled.");
       setIsStarting(false);
@@ -82,13 +116,17 @@ function GoogleLoginButtonInner() {
     <Button
       variant="outline"
       fullWidth
-      isLoading={isStarting || exchangeIdToken.isPending}
+      isLoading={isStarting || exchangeCode.isPending}
       onClick={() => {
         setIsStarting(true);
         googleLogin();
       }}
       leftIcon={
-        <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z"
